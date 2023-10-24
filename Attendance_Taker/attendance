@@ -1,0 +1,42 @@
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime
+
+
+def take_attendance(spreadsheet_name):
+    # Use credentials from the client_secret.json file that you download from the Google Developer Console
+    scope = ['https://spreadsheets.google.com/feeds',
+             'https://www.googleapis.com/auth/drive']
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    gc = gspread.authorize(credentials)
+
+    # Open the spreadsheet
+    worksheet = gc.open(spreadsheet_name).sheet1
+
+    # Get the current date
+    current_date = datetime.now().strftime('%Y-%m-%d')  # Format: YYYY-MM-DD
+
+    # Assuming the first row contains headers, add the current date as a new header
+    next_col = len(worksheet.row_values(1)) + 1
+    worksheet.update_cell(1, next_col, current_date)
+
+    # Iterate over the names and mark attendance
+    num_rows = worksheet.row_count
+    for row in range(2, num_rows + 1):  # Assuming row 1 has headers
+        name = worksheet.cell(row, 1).value
+
+        # Get user input
+        while True:
+            attendance = input(f"Mark attendance for {name} (Y/N/E): ").upper()
+            if attendance in ['Y', 'N', 'E']:
+                break
+            print("Invalid input. Please enter Y, N, or E.")
+
+        # Update the worksheet in the corresponding cell
+        worksheet.update_cell(row, next_col, attendance)
+
+    print("Attendance recorded successfully!")
+
+# Provide the name of your spreadsheet here
+spreadsheet_name = "KSIG Attendance Fall 2023"
+take_attendance(spreadsheet_name)
